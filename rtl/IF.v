@@ -1,0 +1,33 @@
+
+// 取指IF
+
+module IF(
+    input wire clk,
+    input wire rst_n,
+    input wire [31:0] pc_next,
+    output wire [31:0] pc,
+    output wire [31:0] instr
+);
+
+    wire [31:0] pc_wire;
+    wire [31:0] rom_instr;
+
+    pc u_pc(
+        .clk    (clk),
+        .rst_n  (rst_n),
+        .pc_next(pc_next),
+        .pc     (pc_wire)
+    );
+
+    instr_rom u_rom (
+        .addr (pc_wire),
+        .instr(rom_instr)
+    );
+
+    // ---- 组合逻辑输出 ----
+    assign pc = pc_wire;
+    assign instr = rom_instr;
+
+endmodule
+
+
