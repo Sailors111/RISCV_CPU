@@ -13,7 +13,7 @@ module instr_rom(
         for(integer i = 0; i < instr_count; i = i + 1) begin
             mem[i] = 32'h00000013;  // NOP
         end
-        $readmemh("../hex/test.hex", mem);
+        $readmemh("hex/test.hex", mem);
     end
     
     assign instr = mem[addr[31:2]]; // 地址右移2位作为索引

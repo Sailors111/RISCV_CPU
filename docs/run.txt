@@ -1,0 +1,9 @@
+
+iverilog -o sim/tb_top.vvp rtl/*.v sim/tb_top.v
+
+vvp sim/tb_top.vvp
+
+vcd2fsdb tb_top.vcd -o tb_top.fsdb
+verdi -ssf tb_top.fsdb
+
+
