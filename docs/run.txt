@@ -7,3 +7,7 @@ vcd2fsdb tb_top.vcd -o tb_top.fsdb
 verdi -ssf tb_top.fsdb
 
 
+git add docs hex rtl sim
+git commit -m "Update docs, RTL, hex and simulation files"
+git push
+

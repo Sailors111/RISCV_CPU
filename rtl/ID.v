@@ -5,7 +5,6 @@
 
 module ID(
     input wire clk,
-    input wire rst_n,
 
     // 来自IF/ID级间寄存器
     input wire [31:0] if_pc,
@@ -18,7 +17,6 @@ module ID(
 
     // 传给下一级的PC和原始指令
     output wire [31:0] pc,
-    output wire [31:0] instr,
 
     // 译码结果
     output wire [4:0] rd,        // 目标寄存器编号
@@ -33,7 +31,6 @@ module ID(
     output wire reg_write,
     output wire is_mem_read,
     output wire is_mem_write,
-    output wire [4:0] shamt,      // 移位位数
 
     // 从寄存器堆读出的数据
     output wire [31:0] rs1_data,
@@ -53,8 +50,7 @@ module ID(
         .branch_type(branch_type),
         .reg_write(reg_write),
         .is_mem_read(is_mem_read),
-        .is_mem_write(is_mem_write),
-        .shamt(shamt)
+        .is_mem_write(is_mem_write)
     );
 
     regfile u_regfile(
@@ -69,10 +65,8 @@ module ID(
     );
 
     assign pc = if_pc;
-    assign instr = if_instr;
 
 endmodule
-
 
 
 

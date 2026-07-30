@@ -15,8 +15,7 @@ module decoder(
     output reg [1:0] branch_type, // 分支/跳转类型
     output reg reg_write,       // 寄存器写使能
     output reg is_mem_read,     // 内存读使能
-    output reg is_mem_write,    // 内存写使能
-    output reg [4:0] shamt      // 移位位数
+    output reg is_mem_write     // 内存写使能
 );
 
     reg [6:0] opcode;    // 操作码
@@ -32,7 +31,6 @@ module decoder(
         rs2    = instr[24:20];
         funct3 = instr[14:12];
         funct7 = instr[31:25];
-        shamt  = instr[24:20];  // 用于 I 型移位
 
         // 默认值
         imm       = 32'h0;

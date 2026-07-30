@@ -3,38 +3,30 @@ module top (
     input clk,
     input rst_n,
 
-    output wire [31:0] if_id_pc_out,
-    output wire [31:0] if_id_instr_out,
+    output wire [31:0] alu_result, 
+    output wire [31:0] store_data, 
+    output wire [31:0] pc_plus4,         
 
-    output wire [4:0] rd,        // 目标寄存器编号
-    output wire [4:0] rs1,       // 源寄存器1编号
-    output wire [4:0] rs2,       // 源寄存器2编号
-    output wire [31:0] imm,      // 立即数（扩展后）
-    output wire [4:0] alu_op,    // ALU操作码
-    output wire op1_sel,          // ALU第一操作数选择
-    output wire op2_sel,         // ALU第二操作数选择
-    output wire [1:0] wb_sel,    // 写回数据选择
-    output wire [1:0] branch_type, // 分支/跳转类型
-    output wire reg_write,
-    output wire is_mem_read,
-    output wire is_mem_write,
-    output wire [4:0] shamt,      // 移位位数
+    output wire        branch_taken,    
 
-    output wire [31:0] rs1_data,
-    output wire [31:0] rs2_data
+    output wire [4:0]  rd_out,          
+    output wire        reg_write_out,       
+    output wire        is_mem_read_out,     
+    output wire        is_mem_write_out,    
+    output wire [1:0]  wb_sel_out          
 );
 
     // 第1级：取指（IF）
     wire [31:0] if_pc;
     wire [31:0] if_instr;
-    wire [31:0] pc_next;
+    wire [31:0] if_pc_next;
 
-    assign pc_next = if_pc + 32'd4;
+    assign if_pc_next = if_pc + 32'd4;
 
     IF u_if(
         .clk(clk),
         .rst_n(rst_n),
-        .pc_next(pc_next),
+        .pc_next(if_pc_next),
         .pc(if_pc),
         .instr(if_instr)
     ); 
@@ -52,9 +44,6 @@ module top (
         end
     end
 
-    assign if_id_pc_out = if_id_pc;
-    assign if_id_instr_out = if_id_instr;
-
     // 还未真的执行WB
     wire wb_reg_write;
     wire [4:0] wb_rd;
@@ -66,7 +55,7 @@ module top (
 
     // 第2级：译码（ID）
     wire [31:0] id_pc;
-    wire [31:0] id_instr;
+    
     wire [4:0] id_rd;
     wire [4:0] id_rs1;
     wire [4:0] id_rs2;
@@ -79,13 +68,12 @@ module top (
     wire id_reg_write;
     wire id_is_mem_read;
     wire id_is_mem_write;
-    wire [4:0] id_shamt;
+
     wire [31:0] id_rs1_data;
     wire [31:0] id_rs2_data;
 
     ID u_id(
         .clk(clk),
-        .rst_n(rst_n),
 
         .if_pc(if_id_pc),
         .if_instr(if_id_instr),
@@ -95,7 +83,6 @@ module top (
         .wb_wdata(wb_wdata),
 
         .pc(id_pc),
-        .instr(id_instr),
 
         .rd(id_rd),
         .rs1(id_rs1),
@@ -109,7 +96,6 @@ module top (
         .reg_write(id_reg_write),
         .is_mem_read(id_is_mem_read),
         .is_mem_write(id_is_mem_write),
-        .shamt(id_shamt),
         
         .rs1_data(id_rs1_data),
         .rs2_data(id_rs2_data)
@@ -124,7 +110,6 @@ module top (
     reg [4:0] id_ex_rs1;
     reg [4:0] id_ex_rs2;
     reg [4:0] id_ex_alu_op;
-    reg [4:0] id_ex_shamt;
     reg id_ex_op1_sel;
     reg id_ex_op2_sel;
     reg [1:0] id_ex_wb_sel;
@@ -143,7 +128,6 @@ module top (
             id_ex_rs1 <= 5'h0;
             id_ex_rs2 <= 5'h0;
             id_ex_alu_op <= 5'h0;
-            id_ex_shamt <= 5'h0;
             id_ex_op1_sel <= 1'b0;
             id_ex_op2_sel <= 1'b0;
             id_ex_wb_sel <= 2'b0;
@@ -160,7 +144,6 @@ module top (
             id_ex_rs1 <= id_rs1;
             id_ex_rs2 <= id_rs2;
             id_ex_alu_op <= id_alu_op;
-            id_ex_shamt <= id_shamt;
             id_ex_op1_sel <= id_op1_sel;
             id_ex_op2_sel <= id_op2_sel;
             id_ex_wb_sel <= id_wb_sel;
@@ -171,22 +154,93 @@ module top (
         end
     end
 
-    assign rd = id_ex_rd;
-    assign rs1 = id_ex_rs1;
-    assign rs2 = id_ex_rs2;
-    assign imm = id_ex_imm;
-    assign alu_op = id_ex_alu_op;
-    assign op1_sel = id_ex_op1_sel;
-    assign op2_sel = id_ex_op2_sel;
-    assign wb_sel = id_ex_wb_sel;
-    assign branch_type = id_ex_branch_type;
-    assign reg_write = id_ex_reg_write;
-    assign is_mem_read = id_ex_is_mem_read;
-    assign is_mem_write = id_ex_is_mem_write;
-    assign shamt = id_ex_shamt;
-    assign rs1_data = id_ex_rs1_data;
-    assign rs2_data = id_ex_rs2_data;
+    // 第3级：执行（EX）
+    wire [31:0] ex_alu_result;
+    wire [31:0] ex_store_data;
+    wire [31:0] ex_pc_plus4;
+    wire [31:0] ex_pc_next;
+    wire ex_branch_taken;
+    wire [4:0] ex_rd;
+    wire ex_reg_write;
+    wire ex_is_mem_read;
+    wire ex_is_mem_write;
+    wire [1:0] ex_wb_sel;
+
+    EX u_ex(
+        .id_pc(id_ex_pc),
+
+        .id_rd(id_ex_rd),
+        .id_rs1(id_ex_rs1),
+        .id_rs2(id_ex_rs2),
+        .id_imm(id_ex_imm),
+        .id_alu_op(id_ex_alu_op),
+        .id_op1_sel(id_ex_op1_sel),
+        .id_op2_sel(id_ex_op2_sel),
+        .id_wb_sel(id_ex_wb_sel),
+        .id_branch_type(id_ex_branch_type),
+        .id_reg_write(id_ex_reg_write),
+        .id_is_mem_read(id_ex_is_mem_read),
+        .id_is_mem_write(id_ex_is_mem_write),
+
+        .id_rs1_data(id_ex_rs1_data),
+        .id_rs2_data(id_ex_rs2_data),
+
+        .alu_result(ex_alu_result),
+        .store_data(ex_store_data),
+        .pc_plus4(ex_pc_plus4),
+        .pc_next(ex_pc_next),
+        .branch_taken(ex_branch_taken),
+        .rd(ex_rd),
+        .reg_write(ex_reg_write),
+        .is_mem_read(ex_is_mem_read),
+        .is_mem_write(ex_is_mem_write),
+        .wb_sel(ex_wb_sel)
+    );
+
+    // EX/MEM 级间寄存器
+    reg [31:0] ex_mem_alu_result;
+    reg [31:0] ex_mem_store_data;
+    reg [31:0] ex_mem_pc_plus4;
+    reg        ex_mem_branch_taken;
+    reg [4:0]  ex_mem_rd;
+    reg        ex_mem_reg_write;
+    reg        ex_mem_is_mem_read;
+    reg        ex_mem_is_mem_write;
+    reg [1:0]  ex_mem_wb_sel;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            ex_mem_alu_result   <= 32'h0;
+            ex_mem_store_data   <= 32'h0;
+            ex_mem_pc_plus4     <= 32'h0;
+            ex_mem_branch_taken <= 1'b0;
+            ex_mem_rd           <= 5'h0;
+            ex_mem_reg_write    <= 1'b0;
+            ex_mem_is_mem_read  <= 1'b0;
+            ex_mem_is_mem_write <= 1'b0;
+            ex_mem_wb_sel       <= 2'b0;
+        end else begin
+            ex_mem_alu_result   <= ex_alu_result;
+            ex_mem_store_data   <= ex_store_data;
+            ex_mem_pc_plus4     <= ex_pc_plus4;
+            ex_mem_branch_taken <= ex_branch_taken;
+            ex_mem_rd           <= ex_rd;
+            ex_mem_reg_write    <= ex_reg_write;
+            ex_mem_is_mem_read  <= ex_is_mem_read;
+            ex_mem_is_mem_write <= ex_is_mem_write;
+            ex_mem_wb_sel       <= ex_wb_sel;
+        end
+    end
+
+    assign alu_result       = ex_mem_alu_result;
+    assign store_data       = ex_mem_store_data;
+    assign pc_plus4         = ex_mem_pc_plus4;
+    assign branch_taken     = ex_mem_branch_taken;
+    assign rd_out           = ex_mem_rd;
+    assign reg_write_out    = ex_mem_reg_write;
+    assign is_mem_read_out  = ex_mem_is_mem_read;
+    assign is_mem_write_out = ex_mem_is_mem_write;
+    assign wb_sel_out       = ex_mem_wb_sel;
 
     
 endmodule
-
