@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ns/1ns
 
 module tb_top;
     reg clk;
@@ -59,17 +59,17 @@ module tb_top;
         $dumpvars(0, tb_top);
     end
 
-    reg [31:0] clock = 32'd1;
+    reg [31:0] clock = -32'd1;
 
     always @(posedge clk) begin
         $display("------------------------------------------------------------");
-        $display("clock=C%0d", clock);
+        $display("clock=C%0d", $signed(clock));
         $display("time=%0t", $time);
         $display("IF   : pc=%h instr=%h", if_pc_out, if_instr_out);
         $display("IFID : pc=%h instr=%h", if_id_pc_out, if_id_instr_out);
         $display("IDEX : pc=%h", id_ex_pc_out);
-        $display("EXMEM: alu=%h", ex_mem_alu_result_out);
-        $display("MEMWB: alu=%h mem=%h", mem_wb_alu_result_out, mem_wb_mem_data_out);
+        $display("EXMEM: alu_out=%h", ex_mem_alu_result_out);
+        $display("MEMWB: alu_out=%h mem_out=%h", mem_wb_alu_result_out, mem_wb_mem_data_out);
         $display("WB   : rd=%0d we=%b wdata=%h", wb_rd_out, wb_reg_write_out, wb_wdata_out);
         clock <= clock + 32'd1;
     end
