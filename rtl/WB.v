@@ -18,7 +18,7 @@ module WB(
 );
 
     assign wb_rd = mem_rd;
-    assign wb_reg_write = mem_reg_write;
+    assign wb_reg_write = mem_reg_write && (mem_rd != 5'd0);
 
     always @(*) begin
         case (mem_wb_sel)
@@ -38,15 +38,5 @@ module WB(
     end
 
 endmodule
-
-
-
-
-
-
-
-
-
-
 
 

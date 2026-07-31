@@ -4,15 +4,17 @@
 40118233    // sub  x4, x3, x1
 0021F2B3    // and  x5, x3, x2
 0021E333    // or   x6, x3, x2
+
 002093B3    // sll  x7, x1, x2
 0013D433    // srl  x8, x7, x1
 401454B3    // sra  x9, x8, x1
-00208A63    // beq  x1, x2, target
+
 00002503    // lw   x10, 0(x0)
+00000013    // nop
+00000013    // nop
 00302223    // sw   x3, 4(x0)
-00C005EF    // jal  x11, target2
-00008667    // jalr x12, 0(x1)
-00D00693    // target:  addi x13, x0, 13
-00E00713    // target2: addi x14, x0, 14
+
 00000013    // nop
 00000013    // nop
+00000013    // nop
+

@@ -67,4 +67,11 @@
 // 寄存器x0编号
 `define REG_ZERO 5'd0 
 
+
+// 数据冒险转发技术
+`define NOT_FORWARD 2'b00   // 无需转发
+`define FORWARD_EX  2'b01   // 从EX/MEM转发
+`define FORWARD_MEM 2'b10   // 从MEM/WB转发
+
+
 `endif 

@@ -4,31 +4,41 @@ module tb_top;
     reg clk;
     reg rst_n;
 
-    wire [31:0] alu_result;
-    wire [31:0] store_data;
-    wire [31:0] pc_plus4;
-    wire [31:0] pc_next;
-    wire        branch_taken;
-    wire [4:0]  rd_out;
-    wire        reg_write_out;
-    wire        is_mem_read_out;
-    wire        is_mem_write_out;
-    wire [1:0]  wb_sel_out;
+    wire [31:0] if_pc_out;
+    wire [31:0] if_instr_out;
+
+    wire [31:0] if_id_pc_out;
+    wire [31:0] if_id_instr_out;
+
+    wire [31:0] id_ex_pc_out;
+
+    wire [31:0] ex_mem_alu_result_out;
+    wire [31:0] mem_wb_alu_result_out;
+    wire [31:0] mem_wb_mem_data_out;
+
+    wire [4:0]  wb_rd_out;
+    wire        wb_reg_write_out;
+    wire [31:0] wb_wdata_out;
 
     top u_top (
         .clk(clk),
         .rst_n(rst_n),
 
-        .alu_result(alu_result),
-        .store_data(store_data),
-        .pc_plus4(pc_plus4),
-        .pc_next(pc_next),
-        .branch_taken(branch_taken),
-        .rd_out(rd_out),
-        .reg_write_out(reg_write_out),
-        .is_mem_read_out(is_mem_read_out),
-        .is_mem_write_out(is_mem_write_out),
-        .wb_sel_out(wb_sel_out)
+        .if_pc_out(if_pc_out),
+        .if_instr_out(if_instr_out),
+
+        .if_id_pc_out(if_id_pc_out),
+        .if_id_instr_out(if_id_instr_out),
+
+        .id_ex_pc_out(id_ex_pc_out),
+
+        .ex_mem_alu_result_out(ex_mem_alu_result_out),
+        .mem_wb_alu_result_out(mem_wb_alu_result_out),
+        .mem_wb_mem_data_out(mem_wb_mem_data_out),
+
+        .wb_rd_out(wb_rd_out),
+        .wb_reg_write_out(wb_reg_write_out),
+        .wb_wdata_out(wb_wdata_out)
     );
 
     always #5 clk = ~clk;   // 时钟周期为10ns
@@ -40,7 +50,7 @@ module tb_top;
         #20;
         rst_n = 1'b1;
 
-        #300;
+        #400;
         $finish;
     end
 
@@ -49,24 +59,37 @@ module tb_top;
         $dumpvars(0, tb_top);
     end
 
-    initial begin
-        $display("time if_pc    if_instr ifid_pc  ifid_ins idex_pc  exmem_alu exmem_sd  pc4      pc_next  br rd reg mr mw wb");
-        $monitor("%4t %h %h %h %h %h %h %h %h %h %b %2d  %b  %b  %b %02b",
-                 $time,
-                 u_top.if_pc,
-                 u_top.if_instr,
-                 u_top.if_id_pc,
-                 u_top.if_id_instr,
-                 u_top.id_ex_pc,
-                 alu_result,
-                 store_data,
-                 pc_plus4,
-                 pc_next,
-                 branch_taken,
-                 rd_out,
-                 reg_write_out,
-                 is_mem_read_out,
-                 is_mem_write_out,
-                 wb_sel_out);
+    reg [31:0] clock = 32'd1;
+
+    always @(posedge clk) begin
+        $display("------------------------------------------------------------");
+        $display("clock=C%0d", clock);
+        $display("time=%0t", $time);
+        $display("IF   : pc=%h instr=%h", if_pc_out, if_instr_out);
+        $display("IFID : pc=%h instr=%h", if_id_pc_out, if_id_instr_out);
+        $display("IDEX : pc=%h", id_ex_pc_out);
+        $display("EXMEM: alu=%h", ex_mem_alu_result_out);
+        $display("MEMWB: alu=%h mem=%h", mem_wb_alu_result_out, mem_wb_mem_data_out);
+        $display("WB   : rd=%0d we=%b wdata=%h", wb_rd_out, wb_reg_write_out, wb_wdata_out);
+        clock <= clock + 32'd1;
     end
+
+    // initial begin
+    //     #1;
+    //     $display("time   x0       x1       x2       x3       x4       x5       x6       x7");
+    //     forever begin
+    //         #10;
+    //         $display("%4t  %h %h %h %h %h %h %h %h",
+    //                  $time,
+    //                  u_top.u_id.u_regfile.regs[0],
+    //                  u_top.u_id.u_regfile.regs[1],
+    //                  u_top.u_id.u_regfile.regs[2],
+    //                  u_top.u_id.u_regfile.regs[3],
+    //                  u_top.u_id.u_regfile.regs[4],
+    //                  u_top.u_id.u_regfile.regs[5],
+    //                  u_top.u_id.u_regfile.regs[6],
+    //                  u_top.u_id.u_regfile.regs[7]);
+    //     end
+    // end
+
 endmodule
