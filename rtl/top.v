@@ -27,6 +27,7 @@ module top (
     wire [31:0] if_pc;
     wire [31:0] if_instr;
     wire [31:0] if_pc_next;
+    wire if_pc_write;
 
     wire [31:0] ex_pc_next;
     wire ex_branch_taken;
@@ -36,6 +37,7 @@ module top (
     IF u_if(
         .clk(clk),
         .rst_n(rst_n),
+        .pc_write(if_pc_write),
         .pc_next(if_pc_next),
         .pc(if_pc),
         .instr(if_instr)
@@ -44,11 +46,14 @@ module top (
     // IF/ID 级间寄存器
     reg [31:0] if_id_pc;
     reg [31:0] if_id_instr;
+
+    wire if_id_write;
+
     always @ (posedge clk or negedge rst_n) begin
         if(!rst_n) begin
             if_id_pc    <= 32'h0;
             if_id_instr <= 32'h00000013;  // NOP
-        end else begin
+        end else if (if_id_write) begin
             if_id_pc    <= if_pc;
             if_id_instr <= if_instr;
         end
@@ -74,6 +79,9 @@ module top (
     wire id_reg_write;
     wire id_is_mem_read;
     wire id_is_mem_write;
+
+    wire id_use_rs1;
+    wire id_use_rs2;
 
     wire [31:0] id_rs1_data;
     wire [31:0] id_rs2_data;
@@ -103,6 +111,9 @@ module top (
         .is_mem_read(id_is_mem_read),
         .is_mem_write(id_is_mem_write),
         
+        .use_rs1(id_use_rs1),
+        .use_rs2(id_use_rs2),
+
         .rs1_data(id_rs1_data),
         .rs2_data(id_rs2_data)
     );
@@ -124,6 +135,24 @@ module top (
     reg id_ex_is_mem_write;
     reg id_ex_reg_write;
 
+    wire id_ex_flush;
+
+
+    // 数据冒险：load-use解决方法
+    hazard_unit u_hazard_unit(
+        .id_ex_is_mem_read(id_ex_is_mem_read),
+        .id_ex_rd(id_ex_rd),
+
+        .id_rs1(id_rs1),
+        .id_rs2(id_rs2),
+        .id_use_rs1(id_use_rs1),
+        .id_use_rs2(id_use_rs2),
+
+        .pc_write(if_pc_write),
+        .if_id_write(if_id_write),
+        .id_ex_flush(id_ex_flush)
+    );
+
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             id_ex_pc <= 32'h0;
@@ -133,10 +162,27 @@ module top (
             id_ex_rd <= 5'h0;
             id_ex_rs1 <= 5'h0;
             id_ex_rs2 <= 5'h0;
-            id_ex_alu_op <= 5'h0;
-            id_ex_op1_sel <= 1'b0;
-            id_ex_op2_sel <= 1'b0;
-            id_ex_wb_sel <= 2'b0;
+            id_ex_alu_op <= `ALU_PASS;
+            id_ex_op1_sel <= `OP1_RS1;
+            id_ex_op2_sel <= `OP2_RS2;
+            id_ex_wb_sel <= `WB_ALU;
+            id_ex_branch_type <= `BR_NONE;
+            id_ex_is_mem_read <= 1'b0;
+            id_ex_is_mem_write <= 1'b0;
+            id_ex_reg_write <= 1'b0;
+        end else if(id_ex_flush) begin
+            // 向 EX 插入 bubble
+            id_ex_pc <= 32'h0;
+            id_ex_rs1_data <= 32'h0;
+            id_ex_rs2_data <= 32'h0;
+            id_ex_imm <= 32'h0;
+            id_ex_rd <= 5'h0;
+            id_ex_rs1 <= 5'h0;
+            id_ex_rs2 <= 5'h0;
+            id_ex_alu_op <= `ALU_PASS;
+            id_ex_op1_sel <= `OP1_RS1;
+            id_ex_op2_sel <= `OP2_RS2;
+            id_ex_wb_sel <= `WB_ALU;
             id_ex_branch_type <= `BR_NONE;
             id_ex_is_mem_read <= 1'b0;
             id_ex_is_mem_write <= 1'b0;
@@ -169,29 +215,8 @@ module top (
     wire ex_reg_write;
     wire ex_is_mem_read;
     wire ex_is_mem_write;
-
     wire [1:0] ex_wb_sel;
 
-
-    // 数据冒险-旁路转发技术
-    wire [1:0] forward_rs1;
-    wire [1:0] forward_rs2;
-
-    forwarding_unit u_forwarding_unit(
-        .id_ex_rs1(id_ex_rs1),
-        .id_ex_rs2(id_ex_rs2),
-
-        .ex_mem_rd(ex_mem_rd),
-        .ex_mem_reg_write(ex_mem_reg_write),
-        .ex_mem_is_mem_read(ex_mem_is_mem_read),
-
-        .mem_wb_rd(mem_wb_rd),
-        .mem_wb_reg_write(mem_wb_reg_write),
-
-        .forward_rs1(forward_rs1),
-        .forward_rs2(forward_rs2)
-    );
-    
 
     wire [31:0] ex_mem_forward_data;
     wire [31:0] mem_wb_forward_data;
@@ -250,7 +275,6 @@ module top (
     reg [31:0] ex_mem_alu_result;
     reg [31:0] ex_mem_store_data;
     reg [31:0] ex_mem_pc_plus4;
-    reg        ex_mem_branch_taken;
     reg [4:0]  ex_mem_rd;
     reg        ex_mem_reg_write;
     reg        ex_mem_is_mem_read;
@@ -262,7 +286,6 @@ module top (
             ex_mem_alu_result   <= 32'h0;
             ex_mem_store_data   <= 32'h0;
             ex_mem_pc_plus4     <= 32'h0;
-            ex_mem_branch_taken <= 1'b0;
             ex_mem_rd           <= 5'h0;
             ex_mem_reg_write    <= 1'b0;
             ex_mem_is_mem_read  <= 1'b0;
@@ -272,7 +295,6 @@ module top (
             ex_mem_alu_result   <= ex_alu_result;
             ex_mem_store_data   <= ex_store_data;
             ex_mem_pc_plus4     <= ex_pc_plus4;
-            ex_mem_branch_taken <= ex_branch_taken;
             ex_mem_rd           <= ex_rd;
             ex_mem_reg_write    <= ex_reg_write;
             ex_mem_is_mem_read  <= ex_is_mem_read;
@@ -280,6 +302,7 @@ module top (
             ex_mem_wb_sel       <= ex_wb_sel;
         end
     end
+
 
     // 第4级：访存（MEM）
     wire [4:0] mem_rd;
@@ -356,6 +379,24 @@ module top (
         .wb_wdata(wb_wdata)
     );
 
+    // 数据冒险：旁路转发技术
+    wire [1:0] forward_rs1;
+    wire [1:0] forward_rs2;
+
+    forwarding_unit u_forwarding_unit(
+        .id_ex_rs1(id_ex_rs1),
+        .id_ex_rs2(id_ex_rs2),
+
+        .ex_mem_rd(ex_mem_rd),
+        .ex_mem_reg_write(ex_mem_reg_write),
+        .ex_mem_is_mem_read(ex_mem_is_mem_read),
+
+        .mem_wb_rd(mem_wb_rd),
+        .mem_wb_reg_write(mem_wb_reg_write),
+
+        .forward_rs1(forward_rs1),
+        .forward_rs2(forward_rs2)
+    );
 
     // debug output
     assign if_pc_out              = if_pc;
