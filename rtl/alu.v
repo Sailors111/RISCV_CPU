@@ -17,14 +17,20 @@ module alu(
                 result = op1 - op2;
             `ALU_AND: 
                 result = op1 & op2;
-            `ALU_OR:  
+            `ALU_OR: 
                 result = op1 | op2;
+            `ALU_XOR: 
+                result = op1 ^ op2;
             `ALU_SLL: 
                 result = op1 << op2[4:0];
             `ALU_SRL: 
                 result = op1 >> op2[4:0];
             `ALU_SRA: 
                 result = $signed(op1) >>> op2[4:0];
+            `ALU_SLT: 
+                result = ($signed(op1) < $signed(op2)) ? 32'd1 : 32'd0;
+            `ALU_SLTU: 
+                result = (op1 < op2) ? 32'd1 : 32'd0;
             `ALU_PASS: 
                 result = op2;
             default: 

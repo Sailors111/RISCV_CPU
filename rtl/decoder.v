@@ -12,7 +12,7 @@ module decoder(
     output reg op1_sel,         // ALU第一操作数选择
     output reg op2_sel,         // ALU第二操作数选择
     output reg [1:0] wb_sel,    // 写回数据选择
-    output reg [1:0] branch_type, // 分支/跳转类型
+    output reg [3:0] branch_type, // 分支/跳转类型
     output reg reg_write,       // 寄存器写使能
     output reg is_mem_read,     // 内存读使能
     output reg is_mem_write     // 内存写使能
@@ -48,31 +48,43 @@ module decoder(
             `OPCODE_RTYPE: begin
                 case ({funct3, funct7})
                     {`F3_ADD_SUB, `F7_ADD}: begin
-                        alu_op = `ALU_ADD;
+                        alu_op = `ALU_ADD;          // add rd, rs1, rs2     [rd] = [rs1] + [rs2]
                         reg_write = 1'b1;
                     end
                     {`F3_ADD_SUB, `F7_SUB}: begin
-                        alu_op = `ALU_SUB;
+                        alu_op = `ALU_SUB;          // sub rd, rs1, rs2     [rd] = [rs1] - [rs2]
                         reg_write = 1'b1;
                     end
                     {`F3_AND, `F7_AND}: begin
-                        alu_op = `ALU_AND;
+                        alu_op = `ALU_AND;          // and rd, rs1, rs2     [rd] = [rs1] & [rs2]
                         reg_write = 1'b1;
                     end
                     {`F3_OR, `F7_OR}: begin
-                        alu_op = `ALU_OR;
+                        alu_op = `ALU_OR;           // or rd, rs1, rs2      [rd] = [rs1] | [rs2]
+                        reg_write = 1'b1;
+                    end
+                    {`F3_XOR, `F7_XOR}: begin
+                        alu_op = `ALU_XOR;          // xor rd, rs1, rs2     [rd] = [rs1] ^ [rs2]
                         reg_write = 1'b1;
                     end
                     {`F3_SLL, `F7_SLL}: begin
-                        alu_op = `ALU_SLL;
+                        alu_op = `ALU_SLL;          // sll rd, rs1, rs2     [rd] = [rs1] << [rs2][4:0]
                         reg_write = 1'b1;
                     end
                     {`F3_SRL_SRA, `F7_SRL}: begin
-                        alu_op = `ALU_SRL;
+                        alu_op = `ALU_SRL;          // srl rd, rs1, rs2     [rd] = [rs1] >> [rs2][4:0]
                         reg_write = 1'b1;
                     end
                     {`F3_SRL_SRA, `F7_SRA}: begin
-                        alu_op = `ALU_SRA;
+                        alu_op = `ALU_SRA;          // sra rd, rs1, rs2     [rd] = [rs1] >>> [rs2][4:0]
+                        reg_write = 1'b1;
+                    end
+                    {`F3_SLT, `F7_SLT}: begin
+                        alu_op = `ALU_SLT;
+                        reg_write = 1'b1;
+                    end
+                    {`F3_SLTU, `F7_SLTU}: begin
+                        alu_op = `ALU_SLTU;
                         reg_write = 1'b1;
                     end
                     default: begin
@@ -91,8 +103,20 @@ module decoder(
                         alu_op = `ALU_ADD;
                         reg_write = 1'b1;
                     end
+                    `F3_AND: begin
+                        alu_op = `ALU_AND;
+                        reg_write = 1'b1;
+                    end
+                    `F3_OR: begin
+                        alu_op = `ALU_OR;
+                        reg_write = 1'b1;
+                    end
+                    `F3_XOR: begin
+                        alu_op = `ALU_XOR;
+                        reg_write = 1'b1;
+                    end
                     `F3_SLL: begin
-                        if(funct7 == `F7_SLL)begin
+                        if(funct7 == `F7_SLL) begin
                             alu_op = `ALU_SLL;
                             reg_write = 1'b1;
                         end
@@ -105,6 +129,14 @@ module decoder(
                             alu_op = `ALU_SRL;
                             reg_write = 1'b1;
                         end
+                    end
+                    `F3_SLT: begin
+                        alu_op = `ALU_SLT;
+                        reg_write = 1'b1;
+                    end
+                    `F3_SLTU: begin
+                        alu_op = `ALU_SLTU;
+                        reg_write = 1'b1;
                     end
                     default: begin
                         alu_op = `ALU_PASS;
@@ -135,18 +167,54 @@ module decoder(
             end
 
             `OPCODE_BRANCH: begin
-                if (funct3 == `F3_BEQ) begin
-                    imm = {{19{instr[31]}}, instr[31], instr[7],
-                           instr[30:25], instr[11:8], 1'b0};
-                    alu_op = `ALU_SUB;
-                    branch_type = `BR_BEQ;
-                    reg_write = 1'b0;
-                end
+                case(funct3)
+                    `F3_BEQ: begin
+                        imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+                        alu_op = `ALU_SUB;
+                        branch_type = `BR_BEQ;
+                        reg_write = 1'b0;
+                    end
+                    `F3_BNE: begin
+                        imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+                        alu_op = `ALU_SUB;
+                        branch_type = `BR_BNE;
+                        reg_write = 1'b0;
+                    end
+                    `F3_BLT: begin
+                        imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+                        alu_op = `ALU_SUB;
+                        branch_type = `BR_BLT;
+                        reg_write = 1'b0;
+                    end
+                    `F3_BGE: begin
+                        imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+                        alu_op = `ALU_SUB;
+                        branch_type = `BR_BGE;
+                        reg_write = 1'b0;
+                    end
+                    `F3_BLTU: begin
+                        imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+                        alu_op = `ALU_SUB;
+                        branch_type = `BR_BLTU;
+                        reg_write = 1'b0;
+                    end
+                    `F3_BGEU: begin
+                        imm = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
+                        alu_op = `ALU_SUB;
+                        branch_type = `BR_BGEU;
+                        reg_write = 1'b0;
+                    end
+                    default: begin
+                        imm = 32'h0;
+                        alu_op = `ALU_PASS;
+                        branch_type = `BR_NONE;
+                        reg_write = 1'b0;
+                    end
+                endcase
             end
 
             `OPCODE_JAL: begin
-                imm = {{11{instr[31]}}, instr[31], instr[19:12],
-                       instr[20], instr[30:21], 1'b0};
+                imm = {{11{instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
                 alu_op = `ALU_ADD;
                 op1_sel = `OP1_PC;
                 op2_sel = `OP2_IMM;
@@ -164,6 +232,20 @@ module decoder(
                     branch_type = `BR_JALR;
                     reg_write = 1'b1;
                 end
+            end
+
+            `OPCODE_LUI: begin
+                imm = {instr[31:12], 12'h0};
+                op2_sel = `OP2_IMM;
+                reg_write = 1'b1;
+            end
+
+            `OPCODE_AUIPC: begin
+                imm = {instr[31:12], 12'h0};
+                alu_op = `ALU_ADD;
+                op1_sel = `OP1_PC;
+                op2_sel = `OP2_IMM;
+                reg_write = 1'b1;
             end
 
             default: begin

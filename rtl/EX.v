@@ -14,7 +14,7 @@ module EX(
     input wire id_op1_sel,
     input wire id_op2_sel,
     input wire [1:0] id_wb_sel,
-    input wire [1:0] id_branch_type,
+    input wire [3:0] id_branch_type,
     input wire id_reg_write,
     input wire id_is_mem_read,
     input wire id_is_mem_write,
@@ -67,12 +67,25 @@ module EX(
 
     assign branch_taken = 
         (id_branch_type == `BR_BEQ)  ? (id_rs1_data == id_rs2_data) :
+        (id_branch_type == `BR_BNE)  ? (id_rs1_data != id_rs2_data) :
+        (id_branch_type == `BR_BLT)  ? ($signed(id_rs1_data) < $signed(id_rs2_data)) :
+        (id_branch_type == `BR_BGE)  ? ($signed(id_rs1_data) >= $signed(id_rs2_data)) :
+        (id_branch_type == `BR_BLTU) ? (id_rs1_data < id_rs2_data) :
+        (id_branch_type == `BR_BGEU) ? (id_rs1_data >= id_rs2_data) :
         (id_branch_type == `BR_JAL)  ? 1'b1 :
         (id_branch_type == `BR_JALR) ? 1'b1 :
                                     1'b0;
 
-    assign pc_next =
-        (id_branch_type == `BR_BEQ)  ? (branch_taken ? branch_target : pc_plus4) :
+    wire is_branch = 
+                    (id_branch_type == `BR_BEQ)  || 
+                    (id_branch_type == `BR_BNE)  || 
+                    (id_branch_type == `BR_BLT)  || 
+                    (id_branch_type == `BR_BGE)  || 
+                    (id_branch_type == `BR_BLTU) || 
+                    (id_branch_type == `BR_BGEU);
+
+    assign pc_next = 
+        is_branch ? (branch_taken ? branch_target : pc_plus4) :
         (id_branch_type == `BR_JAL)  ? branch_target :
         (id_branch_type == `BR_JALR) ? jalr_target :
                                     pc_plus4;

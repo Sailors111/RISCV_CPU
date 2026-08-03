@@ -27,7 +27,7 @@ module ID(
     output wire op1_sel,          // ALU第一操作数选择
     output wire op2_sel,         // ALU第二操作数选择
     output wire [1:0] wb_sel,    // 写回数据选择
-    output wire [1:0] branch_type, // 分支/跳转类型
+    output wire [3:0] branch_type, // 分支/跳转类型
     output wire reg_write,
     output wire is_mem_read,
     output wire is_mem_write,

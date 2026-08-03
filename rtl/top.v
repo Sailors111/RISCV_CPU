@@ -70,7 +70,7 @@ module top (
     wire id_op1_sel;
     wire id_op2_sel;
     wire [1:0] id_wb_sel;
-    wire [1:0] id_branch_type;
+    wire [3:0] id_branch_type;
     wire id_reg_write;
     wire id_is_mem_read;
     wire id_is_mem_write;
@@ -119,7 +119,7 @@ module top (
     reg id_ex_op1_sel;
     reg id_ex_op2_sel;
     reg [1:0] id_ex_wb_sel;
-    reg [1:0] id_ex_branch_type;
+    reg [3:0] id_ex_branch_type;
     reg id_ex_is_mem_read;
     reg id_ex_is_mem_write;
     reg id_ex_reg_write;
@@ -137,7 +137,7 @@ module top (
             id_ex_op1_sel <= 1'b0;
             id_ex_op2_sel <= 1'b0;
             id_ex_wb_sel <= 2'b0;
-            id_ex_branch_type <= 2'b0;
+            id_ex_branch_type <= `BR_NONE;
             id_ex_is_mem_read <= 1'b0;
             id_ex_is_mem_write <= 1'b0;
             id_ex_reg_write <= 1'b0;
