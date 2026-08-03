@@ -32,6 +32,9 @@ module ID(
     output wire is_mem_read,
     output wire is_mem_write,
 
+    output wire use_rs1,
+    output wire use_rs2,
+
     // 从寄存器堆读出的数据
     output wire [31:0] rs1_data,
     output wire [31:0] rs2_data
@@ -50,7 +53,9 @@ module ID(
         .branch_type(branch_type),
         .reg_write(reg_write),
         .is_mem_read(is_mem_read),
-        .is_mem_write(is_mem_write)
+        .is_mem_write(is_mem_write),
+        .use_rs1(use_rs1),
+        .use_rs2(use_rs2)
     );
 
     regfile u_regfile(

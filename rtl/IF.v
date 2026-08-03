@@ -4,6 +4,8 @@
 module IF(
     input wire clk,
     input wire rst_n,
+
+    input wire pc_write,
     input wire [31:0] pc_next,
     output wire [31:0] pc,
     output wire [31:0] instr
@@ -15,6 +17,7 @@ module IF(
     pc u_pc(
         .clk    (clk),
         .rst_n  (rst_n),
+        .pc_write(pc_write),
         .pc_next(pc_next),
         .pc     (pc_wire)
     );
@@ -24,7 +27,6 @@ module IF(
         .instr(rom_instr)
     );
 
-    // ---- 组合逻辑输出 ----
     assign pc = pc_wire;
     assign instr = rom_instr;
 
