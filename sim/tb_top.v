@@ -55,7 +55,7 @@ module tb_top;
         #20;
         rst_n = 1'b1;
 
-        repeat (35) @(posedge clk);
+        repeat (60) @(posedge clk);
         #1;
         print_final_state;
         $finish;
@@ -68,7 +68,7 @@ module tb_top;
 
     // Sample commit events before pipeline registers update at the clock edge.
     always @(posedge clk) begin
-        stall_at_edge     = u_top.id_ex_flush;
+        stall_at_edge     = u_top.load_id_ex_flush;
         wb_we_at_edge     = wb_reg_write_out;
         wb_rd_at_edge     = wb_rd_out;
         wb_data_at_edge   = wb_wdata_out;

@@ -53,13 +53,16 @@ module top (
         if(!rst_n) begin
             if_id_pc    <= 32'h0;
             if_id_instr <= 32'h00000013;  // NOP
-        end else if (if_id_write) begin
+        end else if(control_flush) begin
+            if_id_pc    <= 32'h0;
+            if_id_instr <= 32'h00000013;  // NOP
+        end else if (load_if_id_write) begin
             if_id_pc    <= if_pc;
             if_id_instr <= if_instr;
         end
     end
 
-    // 还未真的执行WB
+    // WB阶段写回信号
     wire wb_reg_write;
     wire [4:0] wb_rd;
     wire [31:0] wb_wdata;
@@ -135,10 +138,11 @@ module top (
     reg id_ex_is_mem_write;
     reg id_ex_reg_write;
 
-    wire id_ex_flush;
-
-
     // 数据冒险：load-use解决方法
+    wire load_pc_write;
+    wire load_if_id_write;
+    wire load_id_ex_flush;
+
     hazard_unit u_hazard_unit(
         .id_ex_is_mem_read(id_ex_is_mem_read),
         .id_ex_rd(id_ex_rd),
@@ -148,10 +152,18 @@ module top (
         .id_use_rs1(id_use_rs1),
         .id_use_rs2(id_use_rs2),
 
-        .pc_write(if_pc_write),
-        .if_id_write(if_id_write),
-        .id_ex_flush(id_ex_flush)
+        .pc_write(load_pc_write),
+        .if_id_write(load_if_id_write),
+        .id_ex_flush(load_id_ex_flush)
     );
+
+    wire control_flush;
+    assign control_flush = ex_branch_taken;
+
+    assign if_pc_write = control_flush || load_pc_write;
+
+    wire final_id_ex_flush;
+    assign final_id_ex_flush = control_flush || load_id_ex_flush;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -170,7 +182,7 @@ module top (
             id_ex_is_mem_read <= 1'b0;
             id_ex_is_mem_write <= 1'b0;
             id_ex_reg_write <= 1'b0;
-        end else if(id_ex_flush) begin
+        end else if(final_id_ex_flush) begin
             // 向 EX 插入 bubble
             id_ex_pc <= 32'h0;
             id_ex_rs1_data <= 32'h0;
