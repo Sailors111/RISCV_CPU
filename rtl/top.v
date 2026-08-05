@@ -23,15 +23,139 @@ module top (
     output wire [31:0] wb_wdata_out
 );
 
-    // 第1级：取指（IF）
+    // 1. IF 阶段信号
     wire [31:0] if_pc;
     wire [31:0] if_instr;
     wire [31:0] if_pc_next;
-    wire if_pc_write;
+    wire        if_pc_write;
 
+    // 2. IF/ID 级间寄存器输出
+    wire [31:0] if_id_pc;
+    wire [31:0] if_id_instr;
+
+    // 3. ID 阶段信号
+    wire [31:0] id_pc;
+
+    wire [4:0]  id_rd;
+    wire [4:0]  id_rs1;
+    wire [4:0]  id_rs2;
+
+    wire [31:0] id_imm;
+    wire [4:0]  id_alu_op;
+
+    wire        id_op1_sel;
+    wire        id_op2_sel;
+
+    wire [1:0]  id_wb_sel;
+    wire [3:0]  id_branch_type;
+
+    wire        id_reg_write;
+    wire        id_is_mem_read;
+    wire        id_is_mem_write;
+
+    wire        id_use_rs1;
+    wire        id_use_rs2;
+
+    wire [31:0] id_rs1_data;
+    wire [31:0] id_rs2_data;
+
+    // 4. ID/EX 级间寄存器输出
+    wire [31:0] id_ex_pc;
+    wire [31:0] id_ex_rs1_data;
+    wire [31:0] id_ex_rs2_data;
+    wire [31:0] id_ex_imm;
+
+    wire [4:0]  id_ex_rd;
+    wire [4:0]  id_ex_rs1;
+    wire [4:0]  id_ex_rs2;
+
+    wire [4:0]  id_ex_alu_op;
+
+    wire        id_ex_op1_sel;
+    wire        id_ex_op2_sel;
+
+    wire [1:0]  id_ex_wb_sel;
+    wire [3:0]  id_ex_branch_type;
+
+    wire        id_ex_reg_write;
+    wire        id_ex_is_mem_read;
+    wire        id_ex_is_mem_write;
+
+    // 5. EX 阶段信号
+    wire [31:0] ex_alu_result;
+    wire [31:0] ex_store_data;
+    wire [31:0] ex_pc_plus4;
     wire [31:0] ex_pc_next;
-    wire ex_branch_taken;
 
+    wire        ex_branch_taken;
+
+    wire [4:0]  ex_rd;
+    wire        ex_reg_write;
+    wire        ex_is_mem_read;
+    wire        ex_is_mem_write;
+    wire [1:0]  ex_wb_sel;
+
+    // 6. EX/MEM 级间寄存器输出
+    wire [31:0] ex_mem_alu_result;
+    wire [31:0] ex_mem_store_data;
+    wire [31:0] ex_mem_pc_plus4;
+
+    wire [4:0]  ex_mem_rd;
+    wire        ex_mem_reg_write;
+    wire        ex_mem_is_mem_read;
+    wire        ex_mem_is_mem_write;
+    wire [1:0]  ex_mem_wb_sel;
+
+    // 7. MEM 阶段信号
+    wire [4:0]  mem_rd;
+    wire        mem_reg_write;
+    wire [1:0]  mem_wb_sel;
+
+    wire [31:0] mem_pc_plus4;
+    wire [31:0] mem_alu_result;
+    wire [31:0] mem_data;
+
+    // 8. MEM/WB 级间寄存器输出
+    wire [4:0]  mem_wb_rd;
+    wire        mem_wb_reg_write;
+    wire [1:0]  mem_wb_wb_sel;
+
+    wire [31:0] mem_wb_alu_result;
+    wire [31:0] mem_wb_mem_data;
+    wire [31:0] mem_wb_pc_plus4;
+
+
+    // 9. WB 阶段信号
+    wire [4:0]  wb_rd;
+    wire        wb_reg_write;
+    wire [31:0] wb_wdata;
+
+
+    // 10. load-use 冒险控制信号
+    wire load_use_hazard;
+
+    wire load_pc_write;
+    wire load_if_id_write;
+    wire load_id_ex_flush;
+
+
+    // 11. 控制冒险信号
+    wire control_flush;
+    wire final_id_ex_flush;
+
+    // 12. forwarding 信号
+    wire [1:0] forward_rs1;
+    wire [1:0] forward_rs2;
+
+    wire [31:0] ex_mem_forward_data;
+    wire [31:0] mem_wb_forward_data;
+
+    wire [31:0] real_rs1_data;
+    wire [31:0] real_rs2_data;
+
+
+
+    // 第1级：取指（IF）
     assign if_pc_next = ex_branch_taken ? ex_pc_next : (if_pc + 32'd4);
 
     IF u_if(
@@ -44,51 +168,21 @@ module top (
     ); 
 
     // IF/ID 级间寄存器
-    reg [31:0] if_id_pc;
-    reg [31:0] if_id_instr;
+    if_id_reg u_if_id_reg(
+        .clk(clk),
+        .rst_n(rst_n),
 
-    wire if_id_write;
+        .write_enable(load_if_id_write),
+        .flush(control_flush),
 
-    always @ (posedge clk or negedge rst_n) begin
-        if(!rst_n) begin
-            if_id_pc    <= 32'h0;
-            if_id_instr <= 32'h00000013;  // NOP
-        end else if(control_flush) begin
-            if_id_pc    <= 32'h0;
-            if_id_instr <= 32'h00000013;  // NOP
-        end else if (load_if_id_write) begin
-            if_id_pc    <= if_pc;
-            if_id_instr <= if_instr;
-        end
-    end
+        .pc_in(if_pc),
+        .instr_in(if_instr),
 
-    // WB阶段写回信号
-    wire wb_reg_write;
-    wire [4:0] wb_rd;
-    wire [31:0] wb_wdata;
+        .pc_out(if_id_pc),
+        .instr_out(if_id_instr)
+    );
 
     // 第2级：译码（ID）
-    wire [31:0] id_pc;
-    
-    wire [4:0] id_rd;
-    wire [4:0] id_rs1;
-    wire [4:0] id_rs2;
-    wire [31:0] id_imm;
-    wire [4:0] id_alu_op;
-    wire id_op1_sel;
-    wire id_op2_sel;
-    wire [1:0] id_wb_sel;
-    wire [3:0] id_branch_type;
-    wire id_reg_write;
-    wire id_is_mem_read;
-    wire id_is_mem_write;
-
-    wire id_use_rs1;
-    wire id_use_rs2;
-
-    wire [31:0] id_rs1_data;
-    wire [31:0] id_rs2_data;
-
     ID u_id(
         .clk(clk),
 
@@ -139,9 +233,6 @@ module top (
     reg id_ex_reg_write;
 
     // 数据冒险：load-use解决方法
-    wire load_pc_write;
-    wire load_if_id_write;
-    wire load_id_ex_flush;
 
     hazard_unit u_hazard_unit(
         .id_ex_is_mem_read(id_ex_is_mem_read),
@@ -157,12 +248,10 @@ module top (
         .id_ex_flush(load_id_ex_flush)
     );
 
-    wire control_flush;
     assign control_flush = ex_branch_taken;
 
     assign if_pc_write = control_flush || load_pc_write;
 
-    wire final_id_ex_flush;
     assign final_id_ex_flush = control_flush || load_id_ex_flush;
 
     always @(posedge clk or negedge rst_n) begin
@@ -219,26 +308,10 @@ module top (
     end
 
     // 第3级：执行（EX）
-    wire [31:0] ex_alu_result;
-    wire [31:0] ex_store_data;
-    wire [31:0] ex_pc_plus4;
-
-    wire [4:0] ex_rd;
-    wire ex_reg_write;
-    wire ex_is_mem_read;
-    wire ex_is_mem_write;
-    wire [1:0] ex_wb_sel;
-
-
-    wire [31:0] ex_mem_forward_data;
-    wire [31:0] mem_wb_forward_data;
 
     assign ex_mem_forward_data =(ex_mem_wb_sel == `WB_PC4) ? ex_mem_pc_plus4 :
                                  ex_mem_alu_result;
     assign mem_wb_forward_data = wb_wdata;
-
-    wire [31:0] real_rs1_data;
-    wire [31:0] real_rs2_data;
 
     assign real_rs1_data =
         (forward_rs1 == `FORWARD_EX) ? ex_mem_forward_data :
@@ -317,13 +390,6 @@ module top (
 
 
     // 第4级：访存（MEM）
-    wire [4:0] mem_rd;
-    wire mem_reg_write;
-    wire [1:0] mem_wb_sel;
-
-    wire [31:0] mem_pc_plus4;
-    wire [31:0] mem_alu_result;
-    wire [31:0] mem_data;
 
     MEM u_mem(
         .clk(clk),
@@ -392,8 +458,6 @@ module top (
     );
 
     // 数据冒险：旁路转发技术
-    wire [1:0] forward_rs1;
-    wire [1:0] forward_rs2;
 
     forwarding_unit u_forwarding_unit(
         .id_ex_rs1(id_ex_rs1),
