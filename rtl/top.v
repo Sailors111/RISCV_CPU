@@ -132,8 +132,6 @@ module top (
 
 
     // 10. load-use 冒险控制信号
-    wire load_use_hazard;
-
     wire load_pc_write;
     wire load_if_id_write;
     wire load_id_ex_flush;
@@ -216,21 +214,46 @@ module top (
     );
     
     // ID/EX 级间寄存器
-    reg [31:0] id_ex_pc;
-    reg [31:0] id_ex_rs1_data;
-    reg [31:0] id_ex_rs2_data;
-    reg [31:0] id_ex_imm;
-    reg [4:0] id_ex_rd;
-    reg [4:0] id_ex_rs1;
-    reg [4:0] id_ex_rs2;
-    reg [4:0] id_ex_alu_op;
-    reg id_ex_op1_sel;
-    reg id_ex_op2_sel;
-    reg [1:0] id_ex_wb_sel;
-    reg [3:0] id_ex_branch_type;
-    reg id_ex_is_mem_read;
-    reg id_ex_is_mem_write;
-    reg id_ex_reg_write;
+    id_ex_reg u_id_ex_reg(
+        .clk(clk),
+        .rst_n(rst_n),
+
+        .flush(final_id_ex_flush),
+
+        .pc_in(id_pc),
+        .rs1_data_in(id_rs1_data),
+        .rs2_data_in(id_rs2_data),
+        .imm_in(id_imm),
+
+        .rd_in(id_rd),
+        .rs1_in(id_rs1),
+        .rs2_in(id_rs2),
+        .alu_op_in(id_alu_op),
+        .op1_sel_in(id_op1_sel),
+        .op2_sel_in(id_op2_sel),
+        .wb_sel_in(id_wb_sel),
+        .branch_type_in(id_branch_type),
+        .reg_write_in(id_reg_write),
+        .is_mem_read_in(id_is_mem_read),
+        .is_mem_write_in(id_is_mem_write),
+
+        .pc_out(id_ex_pc),
+        .rs1_data_out(id_ex_rs1_data),
+        .rs2_data_out(id_ex_rs2_data),
+        .imm_out(id_ex_imm),
+
+        .rd_out(id_ex_rd),
+        .rs1_out(id_ex_rs1),
+        .rs2_out(id_ex_rs2),
+        .alu_op_out(id_ex_alu_op),
+        .op1_sel_out(id_ex_op1_sel),
+        .op2_sel_out(id_ex_op2_sel),
+        .wb_sel_out(id_ex_wb_sel),
+        .branch_type_out(id_ex_branch_type),
+        .reg_write_out(id_ex_reg_write),
+        .is_mem_read_out(id_ex_is_mem_read),
+        .is_mem_write_out(id_ex_is_mem_write)
+    );
 
     // 数据冒险：load-use解决方法
 
@@ -253,59 +276,6 @@ module top (
     assign if_pc_write = control_flush || load_pc_write;
 
     assign final_id_ex_flush = control_flush || load_id_ex_flush;
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            id_ex_pc <= 32'h0;
-            id_ex_rs1_data <= 32'h0;
-            id_ex_rs2_data <= 32'h0;
-            id_ex_imm <= 32'h0;
-            id_ex_rd <= 5'h0;
-            id_ex_rs1 <= 5'h0;
-            id_ex_rs2 <= 5'h0;
-            id_ex_alu_op <= `ALU_PASS;
-            id_ex_op1_sel <= `OP1_RS1;
-            id_ex_op2_sel <= `OP2_RS2;
-            id_ex_wb_sel <= `WB_ALU;
-            id_ex_branch_type <= `BR_NONE;
-            id_ex_is_mem_read <= 1'b0;
-            id_ex_is_mem_write <= 1'b0;
-            id_ex_reg_write <= 1'b0;
-        end else if(final_id_ex_flush) begin
-            // 向 EX 插入 bubble
-            id_ex_pc <= 32'h0;
-            id_ex_rs1_data <= 32'h0;
-            id_ex_rs2_data <= 32'h0;
-            id_ex_imm <= 32'h0;
-            id_ex_rd <= 5'h0;
-            id_ex_rs1 <= 5'h0;
-            id_ex_rs2 <= 5'h0;
-            id_ex_alu_op <= `ALU_PASS;
-            id_ex_op1_sel <= `OP1_RS1;
-            id_ex_op2_sel <= `OP2_RS2;
-            id_ex_wb_sel <= `WB_ALU;
-            id_ex_branch_type <= `BR_NONE;
-            id_ex_is_mem_read <= 1'b0;
-            id_ex_is_mem_write <= 1'b0;
-            id_ex_reg_write <= 1'b0;
-        end else begin
-            id_ex_pc <= id_pc;
-            id_ex_rs1_data <= id_rs1_data;
-            id_ex_rs2_data <= id_rs2_data;
-            id_ex_imm <= id_imm;
-            id_ex_rd <= id_rd;
-            id_ex_rs1 <= id_rs1;
-            id_ex_rs2 <= id_rs2;
-            id_ex_alu_op <= id_alu_op;
-            id_ex_op1_sel <= id_op1_sel;
-            id_ex_op2_sel <= id_op2_sel;
-            id_ex_wb_sel <= id_wb_sel;
-            id_ex_branch_type <= id_branch_type;
-            id_ex_is_mem_read <= id_is_mem_read;
-            id_ex_is_mem_write <= id_is_mem_write;
-            id_ex_reg_write <= id_reg_write;
-        end
-    end
 
     // 第3级：执行（EX）
 
@@ -357,36 +327,28 @@ module top (
     );
 
     // EX/MEM 级间寄存器
-    reg [31:0] ex_mem_alu_result;
-    reg [31:0] ex_mem_store_data;
-    reg [31:0] ex_mem_pc_plus4;
-    reg [4:0]  ex_mem_rd;
-    reg        ex_mem_reg_write;
-    reg        ex_mem_is_mem_read;
-    reg        ex_mem_is_mem_write;
-    reg [1:0]  ex_mem_wb_sel;
+    ex_mem_reg u_ex_mem_reg(
+        .clk(clk),
+        .rst_n(rst_n),
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            ex_mem_alu_result   <= 32'h0;
-            ex_mem_store_data   <= 32'h0;
-            ex_mem_pc_plus4     <= 32'h0;
-            ex_mem_rd           <= 5'h0;
-            ex_mem_reg_write    <= 1'b0;
-            ex_mem_is_mem_read  <= 1'b0;
-            ex_mem_is_mem_write <= 1'b0;
-            ex_mem_wb_sel       <= 2'b0;
-        end else begin
-            ex_mem_alu_result   <= ex_alu_result;
-            ex_mem_store_data   <= ex_store_data;
-            ex_mem_pc_plus4     <= ex_pc_plus4;
-            ex_mem_rd           <= ex_rd;
-            ex_mem_reg_write    <= ex_reg_write;
-            ex_mem_is_mem_read  <= ex_is_mem_read;
-            ex_mem_is_mem_write <= ex_is_mem_write;
-            ex_mem_wb_sel       <= ex_wb_sel;
-        end
-    end
+        .alu_result_in(ex_alu_result),
+        .store_data_in(ex_store_data),
+        .pc_plus4_in(ex_pc_plus4),
+        .rd_in(ex_rd),
+        .reg_write_in(ex_reg_write),
+        .is_mem_read_in(ex_is_mem_read),
+        .is_mem_write_in(ex_is_mem_write),
+        .wb_sel_in(ex_wb_sel),
+
+        .alu_result_out(ex_mem_alu_result),
+        .store_data_out(ex_mem_store_data),
+        .pc_plus4_out(ex_mem_pc_plus4),
+        .rd_out(ex_mem_rd),
+        .reg_write_out(ex_mem_reg_write),
+        .is_mem_read_out(ex_mem_is_mem_read),
+        .is_mem_write_out(ex_mem_is_mem_write),
+        .wb_sel_out(ex_mem_wb_sel)
+    );
 
 
     // 第4级：访存（MEM）
@@ -414,31 +376,24 @@ module top (
     );
 
     // MEM/WB 级间寄存器
-    reg [4:0] mem_wb_rd;
-    reg        mem_wb_reg_write;
-    reg [1:0]  mem_wb_wb_sel;
+    mem_wb_reg u_mem_wb_reg(
+        .clk(clk),
+        .rst_n(rst_n),
 
-    reg [31:0] mem_wb_alu_result;
-    reg [31:0] mem_wb_mem_data;
-    reg [31:0] mem_wb_pc_plus4;
+        .rd_in(mem_rd),
+        .reg_write_in(mem_reg_write),
+        .wb_sel_in(mem_wb_sel),
+        .alu_result_in(mem_alu_result),
+        .mem_data_in(mem_data),
+        .pc_plus4_in(mem_pc_plus4),
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            mem_wb_rd         <= 5'h0;
-            mem_wb_reg_write  <= 1'b0;
-            mem_wb_wb_sel     <= 2'b0;
-            mem_wb_alu_result <= 32'h0;
-            mem_wb_mem_data   <= 32'h0;
-            mem_wb_pc_plus4   <= 32'h0;
-        end else begin
-            mem_wb_rd         <= mem_rd;
-            mem_wb_reg_write  <= mem_reg_write;
-            mem_wb_wb_sel     <= mem_wb_sel;
-            mem_wb_alu_result <= mem_alu_result;
-            mem_wb_mem_data   <= mem_data;
-            mem_wb_pc_plus4   <= mem_pc_plus4;
-        end
-    end
+        .rd_out(mem_wb_rd),
+        .reg_write_out(mem_wb_reg_write),
+        .wb_sel_out(mem_wb_wb_sel),
+        .alu_result_out(mem_wb_alu_result),
+        .mem_data_out(mem_wb_mem_data),
+        .pc_plus4_out(mem_wb_pc_plus4)
+    );
 
     // 第5级：写回（WB）
     WB u_wb(
@@ -493,4 +448,3 @@ module top (
 
 
 endmodule
-
