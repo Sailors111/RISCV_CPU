@@ -22,7 +22,7 @@ module IF(
         .pc     (pc_wire)
     );
 
-    instr_rom u_rom (
+    ICache u_icache (
         .addr (pc_wire),
         .instr(rom_instr)
     );
@@ -31,5 +31,4 @@ module IF(
     assign instr = rom_instr;
 
 endmodule
-
 

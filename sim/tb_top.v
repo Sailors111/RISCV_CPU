@@ -128,10 +128,10 @@ module tb_top;
                      u_top.u_id.u_regfile.regs[12]);
             $display("FINAL MEMORY STATE");
             $display("mem[0]=%08h mem[1]=%08h mem[2]=%08h mem[3]=%08h",
-                     u_top.u_mem.u_data_ram.mem[0],
-                     u_top.u_mem.u_data_ram.mem[1],
-                     u_top.u_mem.u_data_ram.mem[2],
-                     u_top.u_mem.u_data_ram.mem[3]);
+                     u_top.u_mem.u_dcache.cache_mem[0],
+                     u_top.u_mem.u_dcache.cache_mem[1],
+                     u_top.u_mem.u_dcache.cache_mem[2],
+                     u_top.u_mem.u_dcache.cache_mem[3]);
             $display("============================================================");
         end
     endtask

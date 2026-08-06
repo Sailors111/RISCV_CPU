@@ -28,7 +28,7 @@ module MEM(
     wire [31:0] wdata = ex_store_data;
     wire [31:0] rdata;
     
-    data_ram u_data_ram(
+    DCache u_dcache(
         .clk(clk),
         
         .is_mem_read(ex_is_mem_read),
