@@ -12,7 +12,7 @@ module IF(
 );
 
     wire [31:0] pc_wire;
-    wire [31:0] rom_instr;
+    wire [31:0] icache_instr;
 
     pc u_pc(
         .clk    (clk),
@@ -24,11 +24,10 @@ module IF(
 
     ICache u_icache (
         .addr (pc_wire),
-        .instr(rom_instr)
+        .instr(icache_instr)
     );
 
     assign pc = pc_wire;
-    assign instr = rom_instr;
+    assign instr = icache_instr;
 
 endmodule
-

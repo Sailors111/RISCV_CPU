@@ -1,5 +1,5 @@
 
-// rtl/instr_rom.v
+// rtl/ICache.v
 
 module ICache(
     input wire [31:0] addr,         // 指令地址

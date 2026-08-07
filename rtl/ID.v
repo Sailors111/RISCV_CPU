@@ -31,6 +31,7 @@ module ID(
     output wire reg_write,
     output wire is_mem_read,
     output wire is_mem_write,
+    output wire [2:0] mem_funct3,
 
     output wire use_rs1,
     output wire use_rs2,
@@ -54,6 +55,7 @@ module ID(
         .reg_write(reg_write),
         .is_mem_read(is_mem_read),
         .is_mem_write(is_mem_write),
+        .mem_funct3(mem_funct3),
         .use_rs1(use_rs1),
         .use_rs2(use_rs2)
     );
@@ -72,6 +74,5 @@ module ID(
     assign pc = if_pc;
 
 endmodule
-
 
 

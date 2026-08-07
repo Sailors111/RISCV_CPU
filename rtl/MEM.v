@@ -8,6 +8,7 @@ module MEM(
 
     input wire ex_is_mem_read,          
     input wire ex_is_mem_write,
+    input wire [2:0] ex_mem_funct3,
 
     input wire [4:0] ex_rd,             // WB阶段写回的目的寄存器编号
     input wire ex_reg_write,            // WB阶段写寄存器堆使能
@@ -33,6 +34,7 @@ module MEM(
         
         .is_mem_read(ex_is_mem_read),
         .is_mem_write(ex_is_mem_write),
+        .mem_funct3(ex_mem_funct3),
 
         .addr(addr),
         .wdata(wdata),

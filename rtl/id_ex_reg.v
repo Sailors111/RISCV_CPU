@@ -26,6 +26,7 @@ module id_ex_reg(
     input wire reg_write_in,
     input wire is_mem_read_in,
     input wire is_mem_write_in,
+    input wire [2:0] mem_funct3_in,
 
     output wire [31:0] pc_out,
     output wire [31:0] rs1_data_out,
@@ -46,7 +47,8 @@ module id_ex_reg(
 
     output wire reg_write_out,
     output wire is_mem_read_out,
-    output wire is_mem_write_out
+    output wire is_mem_write_out,
+    output wire [2:0] mem_funct3_out
 );
 
     localparam ZERO_WORD = 32'h0;
@@ -72,6 +74,7 @@ module id_ex_reg(
     reg id_ex_reg_write;
     reg id_ex_is_mem_read;
     reg id_ex_is_mem_write;
+    reg [2:0] id_ex_mem_funct3;
 
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
@@ -90,6 +93,7 @@ module id_ex_reg(
             id_ex_reg_write    <= 1'b0;
             id_ex_is_mem_read  <= 1'b0;
             id_ex_is_mem_write <= 1'b0;
+            id_ex_mem_funct3   <= `F3_LW;
         end else if(flush) begin
             // 向 EX 插入 bubble
             id_ex_pc           <= ZERO_WORD;
@@ -107,6 +111,7 @@ module id_ex_reg(
             id_ex_reg_write    <= 1'b0;
             id_ex_is_mem_read  <= 1'b0;
             id_ex_is_mem_write <= 1'b0;
+            id_ex_mem_funct3   <= `F3_LW;
         end else begin
             id_ex_pc           <= pc_in;
             id_ex_rs1_data     <= rs1_data_in;
@@ -123,6 +128,7 @@ module id_ex_reg(
             id_ex_reg_write    <= reg_write_in;
             id_ex_is_mem_read  <= is_mem_read_in;
             id_ex_is_mem_write <= is_mem_write_in;
+            id_ex_mem_funct3   <= mem_funct3_in;
         end
     end
 
@@ -141,5 +147,6 @@ module id_ex_reg(
     assign reg_write_out    = id_ex_reg_write;
     assign is_mem_read_out  = id_ex_is_mem_read;
     assign is_mem_write_out = id_ex_is_mem_write;
+    assign mem_funct3_out   = id_ex_mem_funct3;
 
 endmodule

@@ -18,6 +18,7 @@ module EX(
     input wire id_reg_write,
     input wire id_is_mem_read,
     input wire id_is_mem_write,
+    input wire [2:0] id_mem_funct3,
 
     // 从寄存器堆读出的数据
     input wire [31:0] id_rs1_data,
@@ -38,6 +39,7 @@ module EX(
     output wire        reg_write,       // 是否要写回寄存器堆
     output wire        is_mem_read,     // 是否要读内存
     output wire        is_mem_write,    // 是否要写内存
+    output wire [2:0]  mem_funct3,      // 访存宽度/符号扩展控制
     output wire [1:0]  wb_sel          // WB阶段写回数据来源（ALU/mem/PC）
 );
 
@@ -94,9 +96,9 @@ module EX(
     assign reg_write = id_reg_write;
     assign is_mem_read = id_is_mem_read;
     assign is_mem_write = id_is_mem_write;
+    assign mem_funct3 = id_mem_funct3;
     assign wb_sel = id_wb_sel;
     
 endmodule
-
 
 

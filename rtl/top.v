@@ -52,6 +52,7 @@ module top (
     wire        id_reg_write;
     wire        id_is_mem_read;
     wire        id_is_mem_write;
+    wire [2:0]  id_mem_funct3;
 
     wire        id_use_rs1;
     wire        id_use_rs2;
@@ -80,6 +81,7 @@ module top (
     wire        id_ex_reg_write;
     wire        id_ex_is_mem_read;
     wire        id_ex_is_mem_write;
+    wire [2:0]  id_ex_mem_funct3;
 
     // 5. EX 阶段信号
     wire [31:0] ex_alu_result;
@@ -94,6 +96,7 @@ module top (
     wire        ex_is_mem_read;
     wire        ex_is_mem_write;
     wire [1:0]  ex_wb_sel;
+    wire [2:0]  ex_mem_funct3;
 
     // 6. EX/MEM 级间寄存器输出
     wire [31:0] ex_mem_alu_result;
@@ -105,6 +108,7 @@ module top (
     wire        ex_mem_is_mem_read;
     wire        ex_mem_is_mem_write;
     wire [1:0]  ex_mem_wb_sel;
+    wire [2:0]  ex_mem_mem_funct3;
 
     // 7. MEM 阶段信号
     wire [4:0]  mem_rd;
@@ -205,6 +209,7 @@ module top (
         .reg_write(id_reg_write),
         .is_mem_read(id_is_mem_read),
         .is_mem_write(id_is_mem_write),
+        .mem_funct3(id_mem_funct3),
         
         .use_rs1(id_use_rs1),
         .use_rs2(id_use_rs2),
@@ -236,6 +241,7 @@ module top (
         .reg_write_in(id_reg_write),
         .is_mem_read_in(id_is_mem_read),
         .is_mem_write_in(id_is_mem_write),
+        .mem_funct3_in(id_mem_funct3),
 
         .pc_out(id_ex_pc),
         .rs1_data_out(id_ex_rs1_data),
@@ -252,7 +258,8 @@ module top (
         .branch_type_out(id_ex_branch_type),
         .reg_write_out(id_ex_reg_write),
         .is_mem_read_out(id_ex_is_mem_read),
-        .is_mem_write_out(id_ex_is_mem_write)
+        .is_mem_write_out(id_ex_is_mem_write),
+        .mem_funct3_out(id_ex_mem_funct3)
     );
 
     // 数据冒险：load-use解决方法
@@ -309,6 +316,7 @@ module top (
         .id_reg_write(id_ex_reg_write),
         .id_is_mem_read(id_ex_is_mem_read),
         .id_is_mem_write(id_ex_is_mem_write),
+        .id_mem_funct3(id_ex_mem_funct3),
 
         .id_rs1_data(real_rs1_data),
         .id_rs2_data(real_rs2_data),
@@ -323,6 +331,7 @@ module top (
         .reg_write(ex_reg_write),
         .is_mem_read(ex_is_mem_read),
         .is_mem_write(ex_is_mem_write),
+        .mem_funct3(ex_mem_funct3),
         .wb_sel(ex_wb_sel)
     );
 
@@ -339,6 +348,7 @@ module top (
         .is_mem_read_in(ex_is_mem_read),
         .is_mem_write_in(ex_is_mem_write),
         .wb_sel_in(ex_wb_sel),
+        .mem_funct3_in(ex_mem_funct3),
 
         .alu_result_out(ex_mem_alu_result),
         .store_data_out(ex_mem_store_data),
@@ -347,7 +357,8 @@ module top (
         .reg_write_out(ex_mem_reg_write),
         .is_mem_read_out(ex_mem_is_mem_read),
         .is_mem_write_out(ex_mem_is_mem_write),
-        .wb_sel_out(ex_mem_wb_sel)
+        .wb_sel_out(ex_mem_wb_sel),
+        .mem_funct3_out(ex_mem_mem_funct3)
     );
 
 
@@ -361,6 +372,7 @@ module top (
 
         .ex_is_mem_read(ex_mem_is_mem_read),
         .ex_is_mem_write(ex_mem_is_mem_write),
+        .ex_mem_funct3(ex_mem_mem_funct3),
 
         .ex_rd(ex_mem_rd),
         .ex_reg_write(ex_mem_reg_write),

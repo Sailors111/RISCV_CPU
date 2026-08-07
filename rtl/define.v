@@ -45,8 +45,15 @@
 `define F3_BLTU     3'b110
 `define F3_BGEU     3'b111
 
-`define F3_LW       3'b010  // 读内存
-`define F3_SW       3'b010  // 写内存
+`define F3_LB       3'b000  // 读字节并符号扩展
+`define F3_LH       3'b001  // 读半字并符号扩展
+`define F3_LW       3'b010  // 读字
+`define F3_LBU      3'b100  // 读字节并零扩展
+`define F3_LHU      3'b101  // 读半字并零扩展
+
+`define F3_SB       3'b000  // 写字节
+`define F3_SH       3'b001  // 写半字
+`define F3_SW       3'b010  // 写字
 
 `define F3_JALR     3'b000
 
