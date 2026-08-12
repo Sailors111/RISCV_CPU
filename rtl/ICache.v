@@ -1,13 +1,13 @@
 
 // rtl/ICache.v
 
-module ICache(
+module ICache #(
+    parameter ICACHE_DEPTH = 256,
+    parameter INIT_FILE = "hex/test.hex"
+)(
     input wire [31:0] addr,         // 指令地址
     output wire [31:0] instr        // 指令内容
 );
-
-    parameter ICACHE_DEPTH = 256;
-    parameter INIT_FILE = "hex/test.hex";
 
     localparam NOP = 32'h00000013;
 

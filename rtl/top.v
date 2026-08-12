@@ -2,7 +2,9 @@
 `include "rtl/define.v"
 
 
-module top (
+module top #(
+    parameter PROGRAM_FILE = "hex/test.hex"
+)(
     input clk,
     input rst_n,
 
@@ -160,7 +162,9 @@ module top (
     // 第1级：取指（IF）
     assign if_pc_next = ex_branch_taken ? ex_pc_next : (if_pc + 32'd4);
 
-    IF u_if(
+    IF #(
+        .PROGRAM_FILE(PROGRAM_FILE)
+    ) u_if(
         .clk(clk),
         .rst_n(rst_n),
         .pc_write(if_pc_write),

@@ -1,7 +1,9 @@
 
 // 取指IF
 
-module IF(
+module IF #(
+    parameter PROGRAM_FILE = "hex/test.hex"
+)(
     input wire clk,
     input wire rst_n,
 
@@ -22,7 +24,9 @@ module IF(
         .pc     (pc_wire)
     );
 
-    ICache u_icache (
+    ICache #(
+        .INIT_FILE(PROGRAM_FILE)
+    ) u_icache (
         .addr (pc_wire),
         .instr(icache_instr)
     );
