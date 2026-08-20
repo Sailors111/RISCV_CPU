@@ -1,5 +1,5 @@
 
-`include "rtl/define.v"
+`include "define.v"
 
 module EX(
     // 来自ID/EX级间寄存器
@@ -100,5 +100,4 @@ module EX(
     assign wb_sel = id_wb_sel;
     
 endmodule
-
 

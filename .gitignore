@@ -1,0 +1,17 @@
+# 默认忽略仓库根目录下所有内容
+/*
+
+# 保留 GitHub 需要的文件
+!/.gitignore
+!/README.md
+!/xmake.lua
+
+# 保留 GitHub 需要的目录
+!/docs/
+!/docs/**
+!/hex/
+!/hex/**
+!/rtl/
+!/rtl/**
+!/tb/
+!/tb/**

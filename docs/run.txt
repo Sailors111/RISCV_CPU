@@ -1,13 +1,22 @@
+RISC-V CPU directed tests:
 
-iverilog -o sim/tb_top.vvp rtl/*.v sim/tb_top.v
+    xmake build
 
-vvp sim/tb_top.vvp
+Run one test:
 
-vcd2fsdb tb_top.vcd -o tb_top.fsdb
-verdi -ssf tb_top.fsdb
+    xmake run test00
+    xmake run test01
+    xmake run test02
+    xmake run test03
 
+Test list:
 
-git add docs hex rtl sim
-git commit -m "Update docs, RTL, hex and simulation files"
-git push
+    test00: ALU 运算指令测试
+    test01: load/store 访存指令测试
+    test02: branch 分支指令测试
+    test03: 数据冒险与 load-use 测试
 
+Direct Icarus example:
+
+    iverilog -g2012 -Irtl/include -s tb_top -o /tmp/test00.vvp rtl/top.v rtl/if_stage/*.v rtl/id_stage/*.v rtl/ex_stage/*.v rtl/mem_stage/*.v rtl/wb_stage/*.v rtl/reg/*.v rtl/pipeline_ctrl/*.v tb/tb_test00.sv
+    vvp /tmp/test00.vvp

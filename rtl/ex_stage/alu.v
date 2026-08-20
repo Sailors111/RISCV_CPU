@@ -1,12 +1,12 @@
 
-`include "rtl/define.v"
+`include "define.v"
 
 
 module alu(
-    input wire [4:0] alu_op,
-    input wire [31:0] op1,
-    input wire [31:0] op2,
-    output reg [31:0] result
+    input  wire [4:0]  alu_op,
+    input  wire [31:0] op1,
+    input  wire [31:0] op2,
+    output reg  [31:0] result
 );
 
     always @(*) begin
@@ -39,4 +39,3 @@ module alu(
     end
 
 endmodule
-

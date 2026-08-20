@@ -3,7 +3,8 @@
 
 module ICache #(
     parameter ICACHE_DEPTH = 256,
-    parameter INIT_FILE = "hex/test.hex"
+    parameter INIT_FILE = "hex/test00.txt",
+    parameter INIT_WORDS = 24
 )(
     input wire [31:0] addr,         // 指令地址
     output wire [31:0] instr        // 指令内容
@@ -21,7 +22,7 @@ module ICache #(
             cache_mem[i] = NOP;
         end
 
-        $readmemh(INIT_FILE, cache_mem);
+        $readmemh(INIT_FILE, cache_mem, 0, INIT_WORDS - 1);
     end
 
     assign instr = cache_mem[addr[31:2]]; // 地址右移2位作为索引

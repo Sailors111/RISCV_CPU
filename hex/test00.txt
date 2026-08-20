@@ -1,0 +1,27 @@
+// test00: ALU 运算指令测试
+// 目的：覆盖 R-type 和 I-type 算术/逻辑指令，包括加减、位运算、移位和有符号/无符号比较。
+
+00500093 // addi x1, x0, 5
+00700113 // addi x2, x0, 7
+002081b3 // add x3, x1, x2
+40110233 // sub x4, x2, x1
+0020f2b3 // and x5, x1, x2
+0020e333 // or x6, x1, x2
+0020c3b3 // xor x7, x1, x2
+00209433 // sll x8, x1, x2
+001454b3 // srl x9, x8, x1
+ff000593 // addi x11, x0, -16
+00200613 // addi x12, x0, 2
+40c5d6b3 // sra x13, x11, x12
+0015a733 // slt x14, x11, x1
+0015b7b3 // sltu x15, x11, x1
+00b0bdb3 // sltu x27, x1, x11
+ffd08813 // addi x16, x1, -3
+00317893 // andi x17, x2, 3
+0080e913 // ori x18, x1, 8
+00314993 // xori x19, x2, 3
+00309a13 // slli x20, x1, 3
+002a5a93 // srli x21, x20, 2
+4025db13 // srai x22, x11, 2
+0005ab93 // slti x23, x11, 0
+00a0bc13 // sltiu x24, x1, 10

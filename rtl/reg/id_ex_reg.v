@@ -1,4 +1,4 @@
-`include "rtl/define.v"
+`include "define.v"
 
 module id_ex_reg(
     input wire clk,

@@ -1,9 +1,10 @@
 
-`include "rtl/define.v"
+`include "define.v"
 
 
 module top #(
-    parameter PROGRAM_FILE = "hex/test.hex"
+    parameter PROGRAM_FILE = "hex/test00.txt",
+    parameter PROGRAM_WORDS = 24
 )(
     input clk,
     input rst_n,
@@ -163,7 +164,8 @@ module top #(
     assign if_pc_next = ex_branch_taken ? ex_pc_next : (if_pc + 32'd4);
 
     IF #(
-        .PROGRAM_FILE(PROGRAM_FILE)
+        .PROGRAM_FILE(PROGRAM_FILE),
+        .PROGRAM_WORDS(PROGRAM_WORDS)
     ) u_if(
         .clk(clk),
         .rst_n(rst_n),

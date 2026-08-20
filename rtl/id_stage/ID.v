@@ -1,6 +1,6 @@
 
 
-`include "rtl/define.v"
+`include "define.v"
 
 
 module ID(
@@ -74,5 +74,4 @@ module ID(
     assign pc = if_pc;
 
 endmodule
-
 

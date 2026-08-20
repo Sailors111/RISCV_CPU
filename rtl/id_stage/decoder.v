@@ -1,5 +1,5 @@
 
-`include "rtl/define.v"
+`include "define.v"
 
 module decoder(
     input wire [31:0] instr,    // 输入的指令内容

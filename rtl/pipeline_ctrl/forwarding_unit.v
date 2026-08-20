@@ -1,6 +1,6 @@
 
 
-`include "rtl/define.v"
+`include "define.v"
 
 
 module forwarding_unit(

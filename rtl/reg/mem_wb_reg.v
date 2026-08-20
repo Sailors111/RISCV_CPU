@@ -1,4 +1,4 @@
-`include "rtl/define.v"
+`include "define.v"
 
 module mem_wb_reg(
     input wire clk,

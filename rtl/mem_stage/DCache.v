@@ -1,5 +1,5 @@
 
-`include "rtl/define.v"
+`include "define.v"
 
 module DCache(
     input wire clk,

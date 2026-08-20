@@ -2,7 +2,8 @@
 // 取指IF
 
 module IF #(
-    parameter PROGRAM_FILE = "hex/test.hex"
+    parameter PROGRAM_FILE = "hex/test00.txt",
+    parameter PROGRAM_WORDS = 24
 )(
     input wire clk,
     input wire rst_n,
@@ -25,7 +26,8 @@ module IF #(
     );
 
     ICache #(
-        .INIT_FILE(PROGRAM_FILE)
+        .INIT_FILE(PROGRAM_FILE),
+        .INIT_WORDS(PROGRAM_WORDS)
     ) u_icache (
         .addr (pc_wire),
         .instr(icache_instr)

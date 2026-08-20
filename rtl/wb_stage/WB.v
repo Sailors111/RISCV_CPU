@@ -1,5 +1,5 @@
 
-`include "rtl/define.v"
+`include "define.v"
 
 module WB(
     input wire clk,
@@ -38,5 +38,4 @@ module WB(
     end
 
 endmodule
-
 
